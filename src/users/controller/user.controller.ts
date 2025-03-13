@@ -20,7 +20,7 @@ export class UsersController {
     private authService: AuthService,
   ) {}
 
-  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard)
   @MessagePattern('user-created')
   async createUser(@Body() data: any) {
     console.log('Received Event Data:', data);
