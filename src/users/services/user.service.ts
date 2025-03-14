@@ -9,8 +9,9 @@ import { User } from '../entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ApiResponse } from '../common/dto/api-response.dto';
-import { Inject } from '@nestjs/common';
-import { ClientProxy, EventPattern } from '@nestjs/microservices';
+import { UpdateUserDto } from '../dto/UpdateUserDto.dto';
+import { BadRequestException } from '@nestjs/common';
+import { Request,Response } from 'express';
 @Injectable()
 export class UsersService {
   constructor(
@@ -37,9 +38,7 @@ export class UsersService {
     uname: string;
     password: string;
     role: string;
-  }):
-  Promise<ApiResponse<any>>
-   {
+  }): Promise<ApiResponse<any>> {
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const newUser = this.userRepository.create({
@@ -58,6 +57,7 @@ export class UsersService {
       throw new Error(`User creation failed: ${error.message}`);
     }
   }
+
   async findById(id: number): Promise<ApiResponse<any>> {
     try {
       const user = await this.findById(id);
@@ -73,25 +73,32 @@ export class UsersService {
     }
   }
 
-  async removeUser(id: number): Promise<ApiResponse<any>> {
-    try {
-      const result = this.userRepository.delete({ id });
-      if ((await result).affected === 0) {
-        throw new NotFoundException(`User With Id ${id} Not Found`);
-      }
-      return new ApiResponse(true, `User With Id ${id} Deleted Successfuly `);
-    } catch (error) {
-      throw new HttpException(
-        new ApiResponse(false, "Error Can't Delete", undefined, {
-          code: 404,
-          detail: error.message,
-        }),
-        HttpStatus.NOT_FOUND,
-      );
+  async updateUser(
+    userId: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+    Object.assign(user, updateUserDto);
+    return this.userRepository.save(user);
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.userRepository.remove(user);
   }
 
   findByUserName(uname: string): Promise<User> | null {
-    return this.userRepository.findOneBy({uname});
+    return this.userRepository.findOneBy({ uname });
   }
 }
