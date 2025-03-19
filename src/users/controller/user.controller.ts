@@ -1,18 +1,20 @@
 import {
   Controller,
-
-  Param,
-
   Body,
-
-  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/user.service';
 
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  EventPattern,
+  MessagePattern,
+  Payload,
+  Ctx,
+  RmqContext,
+} from '@nestjs/microservices';
 import { AuthService } from '../services/auth.service';
 import { UpdateUserDto } from '../dto/UpdateUserDto.dto';
 
+import { UnauthorizedException } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
@@ -28,9 +30,36 @@ export class UsersController {
   }
 
   @MessagePattern('login')
-  async signIn(@Body() payload: Record<string, any>) {
-    console.log('user loged in', payload);
-    return await this.authService.singIN(payload.uname, payload.password);
+  async signIn(
+    @Payload() payload: Record<string, any>,
+    @Ctx() context: RmqContext,
+  ) {
+    try {
+      console.log(`Login attempt: ${payload.uname}`);
+      if (!payload.uname || !payload.password) {
+        return {
+          success: false,
+          message: 'Username and password are required',
+        };
+      }
+
+      // Authenticate user
+      const result = await this.authService.signIn(
+        payload.uname,
+        payload.password,
+      );
+
+      console.log(`✅ User logged in: ${payload.uname}`);
+      return result; 
+    } catch (error) {
+      console.error(`Login failed for ${payload.uname}:`, error.message);
+
+      if (error instanceof UnauthorizedException) {
+        return { success: false, message: 'Invalid username or password' };
+      }
+
+      return { success: false, message: 'Internal server error' };
+    }
   }
 
   @MessagePattern('get-all-users')
@@ -61,5 +90,4 @@ export class UsersController {
     const { userId, updateUserDto } = data;
     return this.userService.updateUser(userId, updateUserDto);
   }
-  
 }
