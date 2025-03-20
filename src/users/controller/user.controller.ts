@@ -1,6 +1,7 @@
 import {
   Controller,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/user.service';
 
@@ -43,7 +44,6 @@ export class UsersController {
         };
       }
 
-      // Authenticate user
       const result = await this.authService.signIn(
         payload.uname,
         payload.password,
