@@ -71,7 +71,7 @@ export class UsersController {
   }
 
   @MessagePattern('get-one-user')
-  findById(id: any): any {
+  findById(id:any): any {
     return this.userService.findById(id);
   }
 
