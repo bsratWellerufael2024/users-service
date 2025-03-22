@@ -40,6 +40,7 @@ export class UsersService {
     role: string;
   }): Promise<ApiResponse<any>> {
     try {
+      
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const newUser = this.userRepository.create({
         fname: userData.fname,
@@ -58,20 +59,7 @@ export class UsersService {
     }
   }
 
-  // async findById(id: number): Promise<ApiResponse<any>> {
-  //   try {
-  //     const user = await this.findById(id);
-  //     return new ApiResponse(true, 'User Successfuly Fetched', user);
-  //   } catch (error) {
-  //     throw new HttpException(
-  //       new ApiResponse(false, 'User Not Found', undefined, {
-  //         code: 500,
-  //         detail: error.message,
-  //       }),
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
+ 
   async findById(id: number): Promise<ApiResponse<any>> {
     try {
       const user = await this.userRepository.findOne({ where: { id } }); // <-- fix here
