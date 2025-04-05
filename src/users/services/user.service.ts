@@ -40,7 +40,6 @@ export class UsersService {
     role: string;
   }): Promise<ApiResponse<any>> {
     try {
-      
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const newUser = this.userRepository.create({
         fname: userData.fname,
